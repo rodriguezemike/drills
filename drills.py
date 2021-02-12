@@ -165,5 +165,11 @@ def zero_matrix(test_matrix):
 					test_matrix[l][j] = 0
 	return test_matrix
 
-def string_rotation(string):
-	pass
+def is_sub_string(string_a, string_b):
+	return (string_a in string_b)
+
+def string_rotation(string_a, string_b):
+	if (string_a and string_b) and (len(string_a) == len(string_b)):
+		string_a_test = string_a + string_a
+		return is_sub_string(string_b, string_a_test)	
+	return False
