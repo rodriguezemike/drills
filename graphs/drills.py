@@ -28,6 +28,14 @@ def post_order_traversal(node):
 		post_order_traversal(node)
 		print(node.value)
 
+def has_route(src, target):
+	#directed graph,
+	#look ahead to see if theyre in any of the adj adjs
+	#if so, return true
+	#else recursivly search all of them until there are no adj nodes left.
+	adj = src.adjacent
+	while adj:
+		pass
 
 class Node(object):
 	def __init__(self, value, children = []):
