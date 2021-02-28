@@ -4,10 +4,11 @@ template <class T>
 class LinkedListNode {
 	public:
 		Node();	
+		Node(Node &n)
 		~Node();
-		append(T &value);
-		add(T &value);
-		insert(T &value);
-		remove(T &value);
-		reverse();
+		void append(T &value);
+		Node* push(T &value);
+		Node* insert(T &value, int position);
+		void remove(T &value);
+		void reverse();
 }
