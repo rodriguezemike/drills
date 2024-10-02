@@ -1,0 +1,1804 @@
+--table 'dnastrand' with column 'dna', return a table with column 'dna' and your result in a column named 'res'.
+
+-- Table: dnastrand
+-- Columns: dna
+-- Requested Results: dna, res 
+
+-- 1: Retrieve string in "dna" column 
+-- 2: Replace A <> T, C <> G 
+-- 3: Return original string in "dna", transformed string in "res"
+
+
+SELECT dna, TRANSLATE(dna, 'ATGC', 'TACG') AS res 
+FROM dnastrand
+
+SELECT dna, TRANSLATE(dna, 'ATCG', 'TAGC')
+AS res
+FROM dnastrand 
+
+
+--SELECT * FROM information_schema.columns WHERE table_name = 'dnastrand'; 
+CREATE OR REPLACE FUNCTION to_complementary_dna(dna text)
+RETURNS TEXT
+LANGUAGE plpgsql
+  AS
+  $$
+DECLARE
+  complementary_dna text:='';
+  dnaChar char;
+BEGIN
+  FOREACH dnaChar IN ARRAY regexp_split_to_array(dna, '') 
+    LOOP
+      complementary_dna := complementary_dna || CASE
+                                                  WHEN dnaChar = 'A' THEN  'T'
+                                                  WHEN dnaChar = 'T' THEN  'A'
+                                                  WHEN dnaChar = 'C' THEN  'G'
+                                                  WHEN dnaChar = 'G' THEN  'C'
+                                                  ELSE  dnaChar
+                                                END;
+    END LOOP;
+  RETURN complementary_dna;
+END;
+$$;
+  
+SELECT
+    dna,
+    to_complementary_dna(dna)AS res
+FROM dnastrand;
+
+
+============================================================================
+
+
+My Q:
+SELECT 
+  j.job_title,
+  ROUND(AVG(j.salary),2) as average_salary,
+  COUNT(p.id) as total_people,
+  ROUND(SUM(j.salary),2) as total_salary
+  FROM people p
+    JOIN job j
+  ON j.people_id = p.id
+  GROUP BY j.job_title
+  ORDER BY average_salary DESC
+
+
+Missing cast to float
+SELECT 
+  j.job_title,
+  ROUND(AVG(j.salary),2)::FLOAT as average_salary,
+  COUNT(p.id) as total_people,
+  ROUND(SUM(j.salary),2)::FLOAT as total_salary
+  FROM people AS p
+    JOIN job AS j ON p.id = j.people_id 
+  GROUP BY j.job_title
+  ORDER BY average_salary DESC
+
+
+=============================================================================
+
+
+MY Q :
+
+SELECT
+  d.id,
+  d.name
+FROM 
+  departments AS d
+JOIN
+  sales AS s
+ON
+  s.department_id = d.id
+WHERE EXISTS
+  (SELECT 
+    s.price
+   FROM 
+    sales as s
+   WHERE
+    s.price > 98.00
+   ORDER BY s.price DESC)
+
+Suspected bad subquery - Correct
+
+BEST QUERY : 
+
+SELECT d.* 
+FROM departments d
+WHERE EXISTS (SELECT 1 FROM sales s WHERE s.price>98 and s.department_id=d.id);
+
+Second Best Query : 
+
+SELECT D.id, D.name
+FROM departments AS D
+WHERE EXISTS 
+  (SELECT * 
+   FROM sales AS S
+   WHERE D.id = S.department_id AND S.price > 98)
+
+-> Final proper query
+
+SELECT
+  d.*
+FROM 
+  departments AS d
+WHERE EXISTS
+  (SELECT 
+    *
+   FROM 
+    sales as s
+   WHERE 
+    d.id = s.department_id 
+   AND 
+    s.price > 98.00);
+
+
+===============================================================================
+
+
+MY Q :
+
+SELECT
+  REPEAT(m.name,3) AS name,
+  REVERSE(m.characteristics) AS characteristics 
+FROM
+  monsters as m;
+
+The above is correct and simple
+
+
+================================================================================
+
+
+Modulo
+
+select bound - bound % divisor as res from max_multiple
+
+select (bound / divisor) * divisor AS res from max_multiple;
+
+
+=================================================================================
+
+
+Simple Q
+
+-- Your solution here
+SELECT
+  c.capital
+FROM 
+  countries as c
+WHERE
+  c.continent IN ('Africa', 'Afrika') AND
+  c.country LIKE 'E%'
+ORDER BY c.capital LIMIT 3;
+
+
+================================================================================
+
+
+Hello world
+
+
+-- write your select statement to return hello world
+SELECT
+  'hello world!' AS "Greeting";
+
+
+==================================================================================
+
+HAVING CLAUSE
+
+-- Create your SELECT statement here
+SELECT
+  age,
+  count(age) as total_people
+FROM
+  people
+GROUP BY
+  age
+HAVING
+  count(age) >= 10;
+
+=================================================================================
+
+
+Monstars
+
+/*  SQL  */
+SELECT
+  t.id,
+  t.heads,
+  t.arms,
+  b.legs,
+  b.tails,
+  CASE
+    WHEN t.heads > t.arms OR b.tails > b.legs THEN 'BEAST'  
+    ELSE 'WEIRDO'
+  END AS "species"
+FROM
+  top_half as t
+JOIN
+  bottom_half as b
+ON
+  t.id = b.id
+ORDER BY species;
+
+
+===================================================================================
+
+Trolls, regexs for vowels
+
+Instructions:
+
+Trolls are attacking your comment section!
+
+A common way to deal with this situation is to remove all of the vowels from the trolls' comments, neutralizing the threat.
+
+Your task is to write a function that takes a string and return a new string with all vowels removed.
+
+For example, the string "This website is for losers LOL!" would become "Ths wbst s fr lsrs LL!".
+
+Note: for this kata y isn't considered a vowel.
+
+
+-- # write your SQL statement here: you are given a table 'disemvowel' with column 'str', return a table with column 'str' and your result in a column named 'res'.
+
+SELECT
+  str, TRANSLATE(str, 'aeiouAEIOU','') as res
+FROM
+  disemvowel;
+
+
+====================================================================================
+
+NOTE : if select *, keep it to the end. have all IDers at the beginning.
+
+
+For this challenge you need to create a UNION statement, there are two tables ussales and eusales the parent company tracks each sale at its respective location in each table, you must all filter the sale price so it only returns rows with a sale greater than 50.00. You have been tasked with combining that data for future analysis. Order by location (US before EU), then by id.
+
+Not completed, but on the right track. Union all appears to be a concat for the 2d array
+
+
+Solution :
+
+SELECT 'US' as location, *
+  FROM ussales
+  WHERE price > 50
+UNION ALL
+SELECT 'EU' as location, *
+  FROM eusales
+  WHERE price > 50
+
+
+My solution (copied from above, typed out for muscle reasons)
+
+-- Create your SELECT statement here
+SELECT
+  'US' as location, *
+FROM
+  ussales
+WHERE 
+  price > 50
+UNION ALL
+SELECT 
+  'EU' as location, *
+FROM 
+    eusales
+WHERE price > 50;
+
+
+Other Solutions:
+
+-======================================================-
+
+select *
+  from (select 'US' as location,
+               id,
+               name,
+               price,
+               card_name,
+               card_number,
+               transaction_date
+          from ussales
+        union all
+        select 'EU' as location,
+               id,
+               name,
+               price,
+               card_name,
+               card_number,
+               transaction_date
+          from eusales
+       ) s
+ where s.price > 50
+
+
+-========================================================-
+
+  SELECT
+    'US' AS location
+    ,u.id
+    ,u.name
+    ,u.price
+    ,u.card_name
+    ,u.card_number
+    ,u.transaction_date
+  FROM
+    ussales u
+  WHERE
+    u.price > 50
+UNION ALL
+  SELECT
+    'EU' AS location
+    ,e.id
+    ,e.name
+    ,e.price
+    ,e.card_name
+    ,e.card_number
+    ,e.transaction_date
+  FROM
+    eusales e
+  WHERE
+    e.price > 50;
+
+==========================================================================
+
+Hierarchical levels
+
+For this challenge you need to create a RECURSIVE Hierarchical query. You have a table employees of employees, you must order each employee by level. You must use a WITH statement and name it employee_levels after that has been defined you must select from it.
+
+A Level is in correlation what manager managers the employee. e.g. an employee with a manager_id of NULL is at level 1 and then direct employees with the employee at level 1 will be level 2.
+
+employees table schema
+id
+first_name
+last_name
+manager_id (can be NULL)
+resultant schema
+level
+id
+first_name
+last_name
+manager_id (can be NULL)
+
+
+My Solution - Failed. misunderstood join, just full outer join, then filter,
+Can also just use a comma to grab both tables.
+WITH RECURSIVE employee_levels AS (
+  SELECT
+    1 as "level",
+    id,
+    first_name,
+    last_name,
+    manager_id
+  FROM
+    employees
+  WHERE manager_id is NULL
+  UNION ALL
+    SELECT
+      el.level + 1,
+      e.first_name,
+      e.last_name,
+      e.manager_id
+    FROM
+      employees as e
+    INNER JOIN employee_levels el on el.manager_id = e.manager_id
+)
+
+
+Opt Solution
+
+WITH RECURSIVE employee_levels(id, first_name, last_name, manager_id, level) AS (
+    SELECT e.*, 1
+    FROM employees e
+    WHERE e.manager_id IS NULL
+  UNION ALL
+    SELECT e.*, el.level + 1
+    FROM employees e, employee_levels el 
+    WHERE e.manager_id = el.id
+)
+SELECT *
+FROM employee_levels el
+ORDER BY el.level
+
+
+New solution mine with proper understood joins and understood recursion
+
+WITH RECURSIVE employee_levels AS (
+  -- Base Table
+  SELECT
+    1 as "level",
+    id,
+    first_name,
+    last_name,
+    manager_id
+  FROM
+    employees
+  WHERE manager_id is NULL
+  UNION ALL
+  -- Recursive table
+    SELECT
+      el.level + 1,
+      e.id,
+      e.first_name,
+      e.last_name,
+      e.manager_id
+    FROM
+      employees as e, employee_levels el
+    WHERE
+      e.manager_id = el.id
+
+)
+
+
+SELECT * FROM employee_levels
+ORDER BY level;
+
+
+===========================================================================
+
+
+Lateral Joins - Get Top N per Group
+
+Description
+Given the schema presented below write a query, which uses a LATERAL join, that returns two most viewed posts for every category.
+
+Order the result set by:
+
+category name alphabetically
+number of post views largest to lowest
+post id lowest to largest
+Note:
+Some categories may have less than two or no posts at all.
+Two or more posts within the category can be tied by (have the same) the number of views. Use post id as a tie breaker - a post with a lower id gets a higher rank.
+
+DESIRED
+
+category_id | category | title                             | views | post_id
+------------+----------+-----------------------------------+-------+--------
+5           | art      | Most viewed post about Art        | 9234  | 234
+5           | art      | Second most viewed post about Art | 9234  | 712
+2           | business | NULL                              | NULL  | NULL
+7           | sport    | Most viewed post about Sport      | 10    | 126
+...
+
+Failed - In Progress:
+
+
+-- Replace with your SQL query
+SELECT
+  catposts.category_id,
+  c.category,
+  catposts.title,
+  catposts.views,
+  catposts.post_id
+FROM
+  categories as c
+JOIN LATERAL(
+  SELECT
+    title,
+    views,
+    id as post_id
+  FROM
+    posts as p
+) ON c.id = p.category_id 
+ORDER BY views
+
+
+
+Solution:
+
+SELECT c.id category_id, c.category, p.title, p.views, p.id post_id
+FROM categories c
+LEFT JOIN LATERAL( 
+    SELECT title, views, id
+    FROM posts
+    WHERE category_id = c.id
+    ORDER BY views DESC
+    LIMIT 2) p ON true
+ORDER BY 2, 4 DESC, 5;
+
+
+Mod'd Solution:
+
+-- Replace with your SQL query
+SELECT
+  c.id as category_id,
+  c.category,
+  p.title,
+  p.views,
+  p.id as post_id
+FROM
+  categories as c
+LEFT JOIN LATERAL(
+  SELECT
+    title,
+    views,
+    id 
+  FROM
+    posts
+  WHERE
+    category_id = c.id
+  ORDER BY views DESC
+  LIMIT 2) AS p ON true
+ORDER BY 2, 4 DESC, 5;
+
+
+Missing left join to categories. we want all rows on the left vs original join
+Lateral allows for outer query stuff to be used internally for the subquery
+This happens for the outer c.id and the inner category id
+We want to order it at this level for each category
+Then we just want the top 2 for each category.
+name it p for modded posts. ON True used here to always return a join, this could also be cross join.
+Then we order by the second column ascending, fourth column descending, and fifth column ascending.
+
+==========================================================================================================
+
+Piano Keys
+
+Basic idea here is to mod it based on the octave but there are some extra keys that can break the pattern.
+Double modulo here.
+
+SELECT 
+  n,
+  CASE
+    WHEN (n - 1) % 88 % 12 IN (0,2,3,5,7,8,10) THEN 'white' 
+    ELSE 'black'
+    END as res
+FROM pianokeys
+
+
+
+Fixed solution with understanding
+SELECT
+  n,
+  CASE
+    -- minus one for the index
+    -- 88 finds placement on just a single wrap around 
+    -- 12 finds placement on octave
+    WHEN (n-1) % 88 % 12 IN (0,2,3,5,7,8,10) THEN 'white'
+    ELSE 'black'
+  END AS res
+FROM
+  pianokeys as p
+
+
+Naive solution
+
+--# write your SQL statement here: 
+-- you are given a table 'pianokeys' with column 'n'.
+-- return a table with:
+--   this column and your result in a column named 'res'
+-- 2,5,7,10,12,14,17,19,22,24,26,29,31,34,36,38,41,43,46,48,50,53,55,58,60,62,65,67,70,72,74,77,79,82,84,86
+select n,
+case 
+when n%88 in (2,5,7,10,12,14,17,19,22,24,26,29,31,34,36,38,41,43,46,48,50,53,55,58,60,62,65,67,70,72,74,77,79,82,84,86) then 'black'
+else 'white'
+end as res
+from pianokeys
+
+
+==============================================================================================================
+
+SQL Basics : Simple NULL handling
+
+
+For this challenge you need to create a SELECT statement, this statement must have NULL handling, using COALESCE and NULLIF.
+
+If name is an empty string, you must replace with '[product name not found]'.
+
+If card_name is an empty string, you must replace with '[card name not found]'.
+
+If no price is specified (i.e. price is NULL), or if the price is 50 or less, you must discard the row.
+
+eusales table schema
+id
+name
+price
+card_name
+card_number
+transaction_date
+resultant table schema
+id
+name
+price (greater than 50.00)
+card_name
+card_number
+transaction_date
+
+
+Successful Query 
+
+-- Create your SELECT statement here
+SELECT 
+  id,
+  COALESCE(NULLIF(name, ''), '[product name not found]') as name,
+  COALESCE(NULLIF(card_name, ''), '[card name not found]') as card_name,
+  COALESCE(price, 0) as price,
+  card_number,
+  transaction_date
+FROM
+  eusales
+WHERE
+  price > 50;
+
+
+
+The highest voted solution uses an implicit NULL comparison to handle the price comparison
+
+-- Create your SELECT statement here
+select 
+  id, 
+  COALESCE(NULLIF(name, ''), '[product name not found]') as name,
+  price,
+  COALESCE(NULLIF(card_name, ''), '[card name not found]') as card_name,
+  card_number,
+  transaction_date
+from eusales
+where
+price > 50
+
+
+=====================================================================================================================================
+
+
+Subqueries
+
+The objective of this Kata is to show that you are proficient at string manipulation (and perhaps that you can use extensively subqueries).
+
+You will use people table but will focus solely on the name column
+
+name
+Greyson Tate Lebsack Jr.
+Elmore Clementina O'Conner
+you will be provided with a full name and you have to return the name in columns as follows.
+
+name	first_lastname	second_lastname
+Greyson Tate	Lebsack	Jr.
+Elmore	Clementina	O'Conner
+Note: Don't forget to remove spaces around names in your result.
+Note: Due to multicultural context, if full name has more than 3 words, consider the last 2 as first_lastname and second_lastname, all other names belonging to name.
+
+No attempt was made due to not fully understand how to break apart the split array into the proper fields.
+It looks like indexing is supported and that would be the way to do it.
+There was also an issue of understanding the question.
+
+The inner most query builds the array.
+The next level provides a name, and its length
+The outer level provides a necessary names.
+
+Array based solution
+
+
+SELECT
+  array_to_string(name[1:len-2], ' ') AS name,
+  name[len-1]                         AS first_lastname,
+  name[len]                           AS second_lastname
+FROM (
+  SELECT
+    name,
+    array_length(name, 1) AS len
+  FROM (
+    SELECT
+      string_to_array(name, ' ') AS name
+    FROM people
+  ) arr
+) arr_and_len
+
+
+Substring/regex based solutions
+
+select
+  substring(name, '^(.+)\s\S+\s\S+$') as name,
+  substring(name, '^.+\s(\S+)\s\S+$') as first_lastname,
+  substring(name, '^.+\s(\S+)$') as second_lastname
+from people
+
+SELECT 
+  REGEXP_REPLACE(name, '(.*) (.+) (.+)', '\1') as name,
+  REGEXP_REPLACE(name, '(.*) (.+) (.+)', '\2') as first_lastname,
+  REGEXP_REPLACE(name, '(.*) (.+) (.+)', '\3') as second_lastname
+FROM people
+
+
+Taking a look at this regex
+
+ '^(.+)\s\S+\s\S+$' 
+	\s -> whitespace 
+	\S+ -> is anything non whitespace, + is 1 or more, here matching any name what so ever. then back to a whitespace and then back to non whitespace more than one.
+	^ -> Starts with
+	.+ -> any character excluding newlines more than one.
+	() -> Is a subexpression, and can be iterated over at times. can be empty
+
+ '^.+\s(\S+)\s\S+$
+	Same as above but now takes in the next couple of entries with an optional first non whitespace characters can be empty.
+ 
+'^.+\s(\S+)$'
+	same but now we've moved the optional one to the very end.
+
+
+select
+  substring(name, '^(.+)\s\S+\s\S+$') as name,
+  substring(name, '^.+\s(\S+)\s\S+$') as first_lastname,
+  substring(name, '^.+\s(\S+)$') as second_lastname
+from people
+
+This would be my preferred solution over the array version as it is compact
+But does require knowledge of regexs to get. Change thinking from splits and array logic
+To regular expression and search.
+This however is not a subquery which defeats the purpose of this puzzle.
+This dqs the solution in my eyes as it is outside the exercise.
+
+Array based solution
+
+
+SELECT
+  array_to_string(name[1:len-2], ' ') AS name,
+  name[len-1]                         AS first_lastname,
+  name[len]                           AS second_lastname
+FROM (
+  SELECT
+    name,
+    array_length(name, 1) AS len
+  FROM (
+    SELECT
+      string_to_array(name, ' ') AS name
+    FROM people
+  ) arr
+) arr_and_len
+
+=================================================================================================
+
+Prime Numbers to 100
+
+select a.n as prime
+from generate_series(2, 100) as a(n)
+where not exists ( 
+  select 1 
+    from generate_series(2, a.n-1) as b(n)
+   where a.n% b.n=0 )
+
+
+
+-- your code here
+-- This takes a column of numbers and divides em by another, if there is no
+-- record of a number that is divisable by any number up to itself
+-- It is now prime.
+SELECT
+  a.n as prime
+FROM
+  generate_series(2,100) as a(n)
+-- Table of not primes
+WHERE NOT EXISTS (
+  SELECT
+    1
+  FROM 
+    generate_series(2, a.n-1) as b(n)
+  WHERE
+    a.n % b.n = 0
+)
+
+=================================================================================
+
+Exclude 'Adult Only' films without subquery
+
+Write an SQL query to retrieve the top 5 customers who have rented the most movies, excluding customers who have rented at least one movie with an 'NC-17' rating. Subqueries are forbidden to make the task a bit curiouser - you can use select only once
+
+Notes:
+If two or more customers have the same amount of rentals then sort by last name alphabetically.
+
+Couldnt exclude without adding in a subquery
+
+Attempted solution without removing customers.
+
+-- Replace with your SQL Query
+SELECT 
+  c.customer_id,
+  CONCAT(c.first_name, ' ' , c.last_name) AS full_name,
+  COUNT(r.rental_id) as total_rentals
+FROM
+  customer as c,
+  film as f,
+  inventory as i,
+  rental as r
+WHERE
+  c.customer_id = r.customer_id AND 
+  r.inventory_id = i.inventory_id AND
+  f.film_id = i.film_id AND 
+  f.rating != 'NC-17' 
+GROUP BY
+  c.customer_id
+ORDER BY 
+  total_rentals DESC, 
+  full_name
+LIMIT 5;
+
+
+Solution:
+
+select customer_id, first_name || ' ' || last_name as full_name, count(*) as total_rentals
+from customer
+  join rental using (customer_id)
+  join inventory using (inventory_id)
+  join film using (film_id)
+group by customer_id
+having sum((rating = 'NC-17') :: int) = 0
+order by total_rentals desc, last_name
+limit 5
+
+
+Prefer * over counting rental ids
+use last name for alpha order for names, cuz obviously.
+HAVING was the missing keyword used for excluding things with stuff we dont want in agg form.
+
+Our proper solution, old syntax
+
+-- Replace with your SQL Query
+SELECT 
+  c.customer_id,
+  CONCAT(c.first_name, ' ' , c.last_name) AS full_name,
+  COUNT(*) as total_rentals
+FROM
+  customer as c,
+  film as f,
+  inventory as i,
+  rental as r
+WHERE
+  c.customer_id = r.customer_id AND 
+  r.inventory_id = i.inventory_id AND
+  f.film_id = i.film_id
+GROUP BY
+  c.customer_id
+HAVING
+  sum((f.rating = 'NC-17') :: int) = 0
+ORDER BY 
+  total_rentals DESC, 
+  c.last_name
+LIMIT 5;
+
+=================================================================
+
+SIMPLE IN
+
+For this challenge you need to create a SELECT statement, this SELECT statement will use an IN to check whether a department has had a sale with a price over 98.00 dollars.
+
+Here we create a subquery in the WHERE clause in order to make our lives easier
+By creating a table with only the prices that are over 98 bucks.
+From there we only then need to join on the department id of every sale and the id of every
+department in order to keep our 1 to 1 relationship.
+Finally we group by our department id in order to not have extra data.
+
+
+-- Create your SELECT statement here
+SELECT
+  d.id,
+  d.name
+FROM
+  departments as d,
+  sales as s
+WHERE
+  s.department_id = d.id AND
+  s.price IN (
+    SELECT 
+      price
+    FROM
+      sales
+    WHERE
+      price > 98
+  )
+GROUP BY d.id;
+
+
+Simpler solution
+
+SELECT *
+  FROM departments d
+  WHERE d.id IN (
+      SELECT s.department_id
+        FROM sales s
+          WHERE s.price > 98.00
+  )
+
+Notice that in our solution there is only the d table.
+Once we notice that we can simplify our query matching something closer
+To what we in the best practice solutions. Lets try this with ours.
+
+The change in thinking comes with selecting which department id to grab.
+Here we can create a table with only the department ids which have sales over 98
+Since were selecting all columns from the department table
+we can use the * convention, totally removing explicitness but keeping in line with
+SQL conventions.
+
+Doing this also allows us to remove the group by, since we are already only
+picking department ids. I think.
+
+Removing more namespace, we can get something like this
+
+-- Create your SELECT statement here
+SELECT
+  *
+FROM
+  departments
+WHERE
+  id IN (
+    SELECT
+      department_id
+    FROM
+      sales
+    WHERE
+      price > 98
+  )
+
+============================================================================================
+
+For this challenge you need to create a VIEW. This VIEW is used by a sales store to give out vouches to members who have spent over $1000 in departments that have brought in more than $10000 total ordered by the members id. The VIEW must be called members_approved_for_voucher then you must create a SELECT query using the view.
+
+Tables and relationship below:
+
+Not finished. Our try
+-- Create your VIEW statement here
+CREATE VIEW members_approved_for_voucher AS
+  SELECT
+    m.id,
+    m.name,
+    m.email,
+    SUM(p.price) AS total_spending
+  FROM
+    departments as d,
+    products as p,
+    members as m,
+    sales as s
+  WHERE
+    d.id IN (
+      SELECT
+        s.department_id
+      FROM
+        sales as s,
+        products as p
+      WHERE
+        s.product_id = p.id
+      HAVING
+        SUM(p.price) > 10000
+    ) AND
+    m.id IN (
+      SELECT
+        s.member_id
+      FROM
+        sales as s,
+        products as p
+      WHERE
+        s.product_id = p.id
+      HAVING 
+        SUM(p.price) > 1000
+    )
+
+-===========================================================================================-
+CREATE VIEW members_approved_for_voucher AS
+SELECT m.id, m.name, m.email, SUM(p.price) AS total_spending
+FROM members m
+INNER JOIN sales s ON s.member_id = m.id
+INNER JOIN products p ON p.id = s.product_id
+WHERE s.department_id IN (
+  SELECT s2.department_id
+  FROM sales s2
+  INNER JOIN products p2 ON p2.id = s2.product_id
+  GROUP BY s2.department_id
+  HAVING SUM(p2.price) > 10000
+)
+GROUP BY m.id, m.name, m.email
+HAVING SUM(p.price) > 1000
+ORDER BY m.id;
+
+SELECT * FROM members_approved_for_voucher;
+
+-=================================================================================-
+
+OUR SOLUTION Modified with the best solution
+AND having some clarification notes.
+
+-- Create your VIEW statement here
+CREATE VIEW members_approved_for_voucher AS
+  SELECT
+    m.id,
+    m.name,
+    m.email,
+    SUM(p.price) AS total_spending
+  FROM
+    members AS m
+  -- USE INNER JOINS WHEN JUST LOOKING FOR MATCHING UNIQUE KEYS
+  -- THIS KEEPS ANY SUBQUERY STUFF NEAT IN THE WHERE CLAUSE WHERE WE CREATE SUBTABLES
+  INNER JOIN
+    sales ON sales.member_id = m.id
+  INNER JOIN
+    products as p ON p.id = sales.product_id
+  WHERE
+    -- HERE WE WANT ALL THE DEPARTEMENTS THAT HAVE MADE OVER 10K
+    sales.department_id IN (
+      SELECT
+        s.department_id
+      FROM
+        sales as s,
+        products as p
+      WHERE
+        s.product_id = p.id
+      GROUP BY
+        s.department_id
+      HAVING
+        SUM(p.price) > 10000
+    )
+  -- AGGREGATING ALL IDS, NAMES, and EMAILS under a single row for the total spending
+  GROUP BY
+    m.id, m.name, m.email
+  -- LIMIT THAT TOAL SPENDING to anything over a THOUSAND
+  HAVING
+    SUM(p.price) > 1000
+  -- ORDER STUFFS
+  ORDER BY m.id;
+  
+SELECT * FROM members_approved_for_voucher;
+
+=================================================================================================
+
+MIN, MAX, and MEDIAN
+
+Try to not to think things are more complex than they really are.
+It is a problem however with higher level IQs.
+KISS.
+Be aware too that some simple things will be really difficult due to brain wiring
+Especially after a complex problem.
+Here, initially we thought it was min, max and median for each student
+Rather than for all students.
+Provided with extra tables and coming off of the above problem
+we thought it was far more complicated.
+Also being aware of native functions is always good but something that
+can always be looked up in 95% of situations.
+
+-- Create your SELECT statement here
+SELECT
+  MIN(r.score),
+  percentile_cont(0.5) WITHIN GROUP (ORDER BY r.score) AS median,
+  MAX(r.score)
+FROM
+  result as r
+
+===================================================================================================
+
+https://www.codewars.com/kata/5817b124e7f4576fd00020a2/sql
+
+
+Relational Division :  Find all movies two actors cast in together
+
+
+
+
+
+===================================================================================================
+
+For this challenge you need to PIVOT data. You have two tables, products and details. Your task is to pivot the rows in products to produce a table of products which have rows of their detail. Group and Order by the name of the Product.
+
+Tables and relationship below:
+
+products table schema
+- id   - integer
+- name - text
+details table schema
+- id          - integer
+- product_id  - integer
+- detail      - text
+You must use the CROSSTAB statement to create a table that has the schema as below:
+
+CROSSTAB table schema
+- name  - text
+- bad   - bigint
+- good  - bigint
+- ok    - bigint
+If the values aren't assigned to the last three columns within the query directly, it's assumed they will be presented in the lexicographical order (i.e. if we have three values, a, b and c, then bad, good and ok will have these values respectively).
+
+Compare your table to the expected table to view the expected results.
+
+PIVOT with crosstab
+
+Never done this one before but its a matrix transpose, skipped it and so it looks like this
+
+CREATE EXTENSION tablefunc;
+    
+SELECT * 
+FROM  crosstab(
+      'SELECT p.name, detail, COUNT(d.id)
+      FROM products p
+      JOIN details d
+      ON p.id = d.product_id
+      GROUP BY p.name, d.detail
+      ORDER BY 1,2')
+AS ct (name text, bad bigint, good bigint, ok bigint)
+
+There is a little bit of under the hood stuff happening here with the
+bad good and ok bigints. This is okay and can be tested with different
+Queries down the road. The mission here is to simply understand the syntax
+And the broad strokes of the cross tab func.
+
+
+=====================================================================================
+
+Searching for terminal nodes
+
+Task
+You will be given a table where each record represents a node in a graph. Each node has an outbound connection to another (but not necessarily different) node, and these connections are stored as differences between the nodes' id's.
+
+For example, assume there're 3 rows in a table with the following data: id = 1, id = 2, id = 3. If the node with id = 1 has a connection to the node with id = 3, this connection will be represented as a number 2 (stored in the first row's step field) because the difference between their id's is 3 - 1 = 2.
+
+It is also known that some nodes are marked as terminal, i.e. if we were to traverse this graph, reaching such node would stop the traversal.
+
+You have to implement a function which receives an id of a node, traverses the graph, and returns the id of the first encountered terminal node. On top of that, this function must not be recursive, and there're a few limitations in place to ensure this:
+
+The function name can appear only once in your code
+CREATE has to be used exactly once
+You cannot use WITH
+You cannot use EXECUTE
+Notes
+There won't be any missing id's across the table rows, i.e. you can interpret step both as a difference between id's and as a difference between row_number's
+It is possible that some nodes will form loops without terminal nodes, but their id's will never be provided as input to your function
+Your solution can be at most 1000 characters long to prevent any hardcoding
+You are not restricted to plain SQL. You may use PLPGSQL dialect.
+Input table
+------------------------------
+| Table |  Column  |  Type   |
+|-------+----------+---------|
+| nodes | id       | int     |
+|       | step     | int     |
+|       | terminal | boolean |
+------------------------------
+Example
+ id | step | terminal
+----+------+----------
+  1 |   7  |  false
+  2 |   1  |  true
+  3 |   2  |  false
+  4 |   3  |  false
+  5 |  -3  |  false
+  6 |   0  |  true
+  7 |  -3  |  false
+  8 |  -4  |  true
+The following paths exist among the nodes listed above (ignoring the infinite loops):
+
+1 -> 8 (id=1 + step=7)
+3 -> 5 (id=3 + step=2) -> 2 (id=5 + step=-3)
+6
+
+This is another one I have not seen before using a create function.
+Here I also pass to understand the syntax.
+
+Algorithimically, I would iterate through the nodes until a terminal Node is found.
+This is a simple traversal and can be handled iteratively or recursively.
+
+It appears that a PLPGSQL dialect is used. This is known as SQL Procedural Language.
+It is used to write funcs and logic that are more complex than your typical SQL.
+
+This traversal now looks like this:
+
+CREATE FUNCTION last_node(first_node int) RETURNS int AS $$
+  DECLARE
+    endNote INTEGER = first_node;
+
+  BEGIN
+    WHILE NOT (SELECT terminal FROM nodes WHERE id = endNote) LOOP
+      SELECT id+step INTO endNote FROM nodes WHERE id = endNote;
+    END LOOP;
+    RETURN endNote;
+  END;
+  
+$$ LANGUAGE PLPGSQL;
+
+Commented Solution after writing it down.
+
+CREATE FUNCTION last_node(first_node int) RETURNS int AS $$
+  -- Functionally, this is our vars init
+  DECLARE
+    endNode INTEGER = first_node;
+  -- while loops a simple traversal
+  BEGIN
+    -- Were looking for terminal = True for the current node, endNode, we loop through each node
+    WHILE NOT (select terminal FROM nodes WHERE id = endNode) LOOP
+      -- Here we going from node to node, this is id+step, which would look like node.next or node.neighbors[i]
+      select id+step INTO endNode FROM nodes WHERE id = endNode;
+    -- while loop is done
+    END LOOP;
+  -- Return the node that were at
+  RETURN endNode;
+  END;
+
+$$ LANGUAGE PLPGSQL;
+
+=====================================================================================
+
+Let's consider a case where we have a students table and a courses table. The tables have the following structure:
+
+students:
+
+| id  | name     | email               |
+|-----|----------|---------------------|
+| 1   | John     | john@example.com    |
+| 2   | Sarah    | sarah@example.com   |
+| 3   | Robert   | robert@example.com  |
+...
+courses:
+
+| id  | student_id | course_name | score |
+|-----|------------|-------------|-------|
+| 1   | 1          | Math        | 90    |
+| 2   | 1          | Science     | 85    |
+| 3   | 2          | Math        | 92    |
+| 4   | 2          | Science     | 80    |
+...
+
+We need to find the students who have a higher score in Science than in Math.
+
+Your SQL query should return the student_id, name (the name of the student), and his or her difference in scores between these courses (named as score_difference).
+
+Order the result by the difference in scores in descending order, and if diffrence is the same, then by student_id in ascending order.
+
+Good Luck!
+
+Desired Output
+The desired output should look like this:
+
+student_id	name	score_difference
+3	Robert	25
+5	Emma	3
+6	Olivia	2
+10	James	2
+
+
+-- Substitute with your SQL
+-- Remember inner queries first, then build outer queries
+-- This is a long winded way of doing this but will be okay for small tables
+-- I dont think this is the optimal way
+
+SELECT
+  students.id as student_id,
+  students.name as name,
+  score_difference_table.score_difference
+FROM
+  (SELECT
+    science_table.student_id,
+    science_table.score - math_table.score as score_difference
+  FROM
+    (SELECT
+      student_id,
+      score
+    FROM
+        courses
+    WHERE
+      course_name = 'Math') AS math_table,
+    (SELECT
+      student_id,
+      score
+    FROM
+      courses
+    WHERE
+      course_name = 'Science') as science_table
+  WHERE
+    science_table.score > math_table.score AND
+    science_table.student_id = math_table.student_id) AS score_difference_table,
+  students
+WHERE
+  students.id = score_difference_table.student_id
+ORDER BY score_difference DESC, student_id;
+
+
+-=Optimal Way=-
+-- Substitute with your SQL
+SELECT
+  s.id AS student_id,
+  s.name,
+  course_s.score - course_m.score AS score_difference
+FROM students s
+JOIN courses course_s ON s.id = course_s.student_id AND course_s.course_name = 'Science'
+JOIN courses course_m ON s.id = course_m.student_id AND course_m.course_name = 'Math' AND course_s.score > course_m.score
+GROUP BY s.id, course_s.score, course_m.score
+ORDER BY score_difference DESC, s.id ASC
+
+
+-= Bringing in the Optimal to gain a better understanding =-
+
+-- Substitute with your SQL
+SELECT
+  students.id as student_id,
+  students.name,
+  science_course.score - math_course.score AS score_difference
+FROM students
+JOIN courses science_course ON students.id = science_course.student_id AND science_course.course_name = 'Science'
+JOIN courses math_course ON students.id = math_course.student_id AND math_course.course_name = 'Math'
+AND science_course.score > math_course.score
+GROUP BY students.id, science_course.score, math_course.score
+ORDER BY score_difference DESC, student_id ASC
+
+==================================================================================
+
+Simple Fun #288: Turns On Road
+
+Task
+There's a wolf who lives in the plane forest, which is located on the Cartesian coordinate system. When going on the hunt, the wolf starts at point (0, 0) and goes spirally as shown in the picture below:
+
+The wolf finally found something to eat at point (x, y). Your task is to calculate the number of turns he had to make to get to that point.
+
+Input/Output
+[input] integer x
+
+x coordinate of the final point.
+
+-1000000 ≤ x ≤ 1000000
+
+[input] integer y
+
+y coordinate of the final point.
+
+-1000000 ≤ y ≤ 1000000
+
+[output] an integer
+
+The number of turns.
+
+Example
+For x = 1 and y = 1, the output should be 1.
+
+Path:(0,0) --> (1,0) --> (1,1), 1 turn at (1,0)
+
+For x = 1 and y = -1, the output should be 4.
+
+Path:(0,0) --> (1,0) --> (1,1) --> (-1,1) --> (-1,-1) --> (1,-1),
+
+4 turns at (1,0), (1,1), (-1,1), (-1,-1)
+
+
+Solution was not tried here but proved to be simple,
+Must think more algorithmically rather than data SQLy as this
+could be attempted and probably figured out.
+
+select 
+  x, y,
+  case 
+    when x >  y and x <= 1-y then  -y   *4
+    when x >= y and x >  1-y then ( x-1)*4+1
+    when x <  y and x >=  -y then ( y-1)*4+2
+    when x <= y and x <   -y then (-x-1)*4+3
+    else 0
+  end res 
+from turns_on_road
+
+Thinking was more like this, too concrete and too complex, think simple unless directed otherwise:
+
+CREATE OR REPLACE FUNCTION turnsOnRoad(x BIGINT, y BIGINT)
+RETURNS BIGINT AS $$
+DECLARE
+  res BIGINT DEFAULT 0;
+BEGIN
+  IF (FALSE = (x = y OR CASE WHEN x > 0 THEN x + y = 1 ELSE x + y = 0 END)) THEN
+    IF (ABS(x) > ABS(y)) THEN
+      y := x;
+    ELSE
+      x := CASE WHEN y > 0 THEN y * -1 ELSE y * -1 + 1 END;
+    END IF;
+  END IF;
+  IF (y != 0) THEN
+    res := 2 * ABS(x) + 2 * ABS(y) - 1;
+    res := CASE WHEN x > 0 THEN res - 1 ELSE res END;
+    res := CASE WHEN y > 0 THEN res - 1 ELSE res END;
+  END IF;
+  RETURN res;
+END; $$
+LANGUAGE PLPGSQL;
+
+SELECT "x", "y", turnsOnRoad("x", "y") as res
+FROM ONLY "turns_on_road"
+
+===================================================================================
+
+Customer Orders: Products 1 & 2, Excluding 3
+
+Business sells only three unique products: "Product 1," "Product 2," and "Product 3."
+
+Write an SQL query to find customers who have ordered "Product 1" and "Product 2" but not "Product 3." Additionally, provide a summary of how many times they have ordered the first two products.
+
+Schema:
+
+customers:
+
+customer_id (integer) - primary key
+name (varchar) - Name of the customer.
+orders:
+
+order_id (integer) - primary key
+customer_id (integer) - Identifier for the customer who placed the order.
+product_name (varchar) - Name of the ordered product. It can only be one of the three values: "Product 1," "Product 2," or "Product 3."
+Write a query that returns the following columns:
+
+customer_id: The unique identifier of the customer.
+name: The name of the customer.
+product_summary: A string that describes how many times the customer has ordered "Product 1" and "Product 2," formatted as "Product 1: {N} times || Product 2: {N} times."
+The results should be ordered by customer_id in descending order.
+
+GLHF!
+
+Desired Output
+The desired output should look like this:
+
+customer_id	name	product_summary
+92	Jeri Auer	Product 1: 25 times || Product 2: 25 times
+83	Chang Sporer	Product 1: 8 times || Product 2: 8 times
+82	Regan Schimmel	Product 1: 15 times || Product 2: 15 times
+...
+
+SELECT
+  customers.customer_id,
+  customers.name,
+  FORMAT('Product 1: %s times || Product 2: %s times', product_one.orders, product_two.orders) AS product_summary
+FROM
+  customers,
+  (SELECT 
+    COUNT(order_id) as orders,
+    customer_id
+  FROM 
+    orders
+  WHERE 
+    customer_id NOT IN (SELECT customer_id FROM orders WHERE product_name = 'Product 3') AND
+    product_name = 'Product 1'
+  GROUP BY customer_id) as product_one,
+  (SELECT 
+    COUNT(order_id) as orders,
+    customer_id
+  FROM 
+    orders
+  WHERE 
+    customer_id NOT IN (SELECT customer_id FROM orders WHERE product_name = 'Product 3') AND
+    product_name = 'Product 2'
+  GROUP BY customer_id) as product_two
+WHERE
+  customers.customer_id = product_one.customer_id AND 
+  customers.customer_id = product_two.customer_id
+ORDER BY customer_id DESC
+
+My Optimal Solution
+
+SELECT
+  customers.customer_id,
+  customers.name,
+  FORMAT('Product 1: %s times || Product 2: %s times', COUNT(*)FILTER(WHERE orders.product_name = 'Product 1'), COUNT(*)FILTER(WHERE orders.product_name = 'Product 2')) AS product_summary
+FROM
+  customers
+JOIN orders ON customers.customer_id = orders.customer_id
+GROUP BY customers.customer_id
+HAVING EVERY(orders.product_name <> 'Product 3') AND COUNT(*)FILTER(WHERE orders.product_name = 'Product 1') <> 0 AND COUNT(*)FILTER(WHERE orders.product_name = 'Product 2') <> 0
+ORDER BY customers.customer_id DESC
+
+Some Notes : Our intuition lead us to the agg path and when we didnt have
+The syntaical understanding we went back to the subquery path
+Which is proper. Once the Agg understading was there, ie the filter
+One the counts diamond operator on the product name for HAVING EVERY func
+We were able to put together the intuition with the newly gained
+Syntical understanding to come up with a solution that
+made me happy.
+
+I like happy me.
+
+
+
+Other Best Practices/Optimal way
+
+with n as (
+  select customer_id,
+    count(*) filter (where product_name = 'Product 1') as n1,
+    count(*) filter (where product_name = 'Product 2') as n2
+  from orders
+  group by customer_id
+  having every(product_name <> 'Product 3')
+)
+select customer_id, name,
+  format('Product 1: %s times || Product 2: %s times', n1, n2) as product_summary
+from n join customers using (customer_id)
+where n1 <> 0 and n2 <> 0
+order by customer_id desc
+
+======================================================================================================================
+
+--select * from house_tasks LEFT JOIN task_status ON house_tasks.task_id = task_status.task_id;
+SELECT
+  h.house_id,
+  COUNT(t.task_id) AS total_tasks,
+  COUNT(*)FILTER(WHERE t.task_status = 'Completed') AS completed_tasks,
+  COUNT(*)FILTER(WHERE t.task_status = 'In Progress' OR t.task_status IS NULL) AS incomplete_tasks
+FROM
+  house_tasks as h
+LEFT JOIN task_status t ON h.task_id = t.task_id
+GROUP BY h.house_id
+ORDER BY h.house_id DESC
+
+Here we are missing the every task completed. We will have to do this the long way again
+And then get to the shorthand version.
+In this case were are missing the distinct mindset. We were thinking in group by way
+Distinct will help us find anything different from the 'completed task'. There are also nulls here
+Sparse data then requires us to do a left join, and a natural left join in case there are things missing.
+
+The correct query is as follows.
+
+select house_id, count(distinct task_id) total_tasks, 
+  count(distinct task_id)-count(distinct task_id)filter(where task_status is distinct from 'Completed') completed_tasks,
+  count(distinct task_id)filter(where task_status is distinct from 'Completed') incomplete_tasks
+from house_tasks natural left join task_status
+group by 1 order by 1 desc
+
+
+
+SELECT
+  house_id,
+  COUNT(DISTINCT task_id) total_tasks,
+  COUNT(DISTINCT task_id) - COUNT(DISTINCT task_id)FILTER(WHERE task_status IS DISTINCT FROM 'Completed') completed_tasks,
+  COUNT(DISTINCT task_id)FILTER(WHERE task_status IS DISTINCT FROM 'Completed') incomplete_tasks
+FROM house_tasks
+NATURAL LEFT JOIN task_status
+GROUP by house_id
+ORDER by house_id DESC
+
+======================================================================================================================
+
+Unique Weekend Query
+
+This on was a pass due to lack of knowledge on dates and stuff
+
+SELECT employee_id,
+    COUNT(DISTINCT DATE_TRUNC('week', attendance_date)) AS weekends_worked,
+    COUNT(attendance_date) AS total_weekend_days_worked
+FROM employee_attendance
+WHERE EXTRACT(YEAR FROM attendance_date) = 2023
+AND EXTRACT(ISODOW FROM attendance_date) IN (6, 7)
+GROUP BY employee_id
+ORDER BY weekends_worked DESC, total_weekend_days_worked DESC, employee_id DESC;
+
+Dates feel obtuse here and a bit archaic with a set funcs to use that are not clear.
+This would have to be rote mem specifally for sql. Remember EXtract, ISODOW, YEAR, and the combination of these.
+
+SELECT
+  employee_id,
+  -- Count certain things from the 2023 weekend worked WHERE clause
+  --We count the weekend worked, these are distinct ie the same week will not be counted twice
+  COUNT(DISTINCT DATE_TRUNC('week', attendance_date)) AS weekends_worked,
+  --Here we count just the weekend days worked, these can land on the same week.
+  COUNT(attendance_date) AS total_weekend_days_worked
+FROM employee_attendance
+--extract weekend themselves from the table for only 2023
+WHERE 
+  EXTRACT(YEAR FROM attendance_date) = 2023 AND --Only 2023, assumes timestamp  
+  EXTRACT(ISODOW FROM attendance_date) IN (6,7) -- Pull day of week (dow) and make sure its a weekend, 6th or 7th day
+GROUP BY employee_id
+ORDER BY weekends_worked DESC, total_weekend_days_worked DESC, employee_id DESC
+
+======================================================================================================================
+
+SQL Bad Data needs to be reported!
+
+This one is also a pass, it appears to combine multiple concepts I have not yet tried. This is a signal to step back through basics and grind out 6 and 7 kyu katas before trying a 4 kyu kata.
+
+
+We will examine the query for educational purposes.
+
+SELECT
+  email,
+  sum total_bought,
+  -- Handled as an aggregate, parititoned by sales rep id, name of the representative is formatted, giving us a close to equal amount of tasks per representative.
+  (ARRAY_AGG(rtrim(salesreps.firstname||' '||COALESCE(lastname,'')) ORDER BY hiredate))[(RANK()OVER(ORDER BY sum DESC, email)-1)%COUNT(DISTINCT salesrepid)+1] rep_name,
+  -- Array here to handle two different scripts based on what condition has happened. An address or no address. Which is represented by an index and if customerid is in the address table
+  (ARRAY['You''ve spent enough money with us so we care about your business. You don''t have an address on file yet you''ve selected an address. Please login to our site and add an address so we may use it... Don''t ask any questions on how this happened.',
+         'You''ve spent enough money with us so we care about your business. Unfortunately you have selected a bad address. Please login to our site and select a good address.'
+        ])[1+(customerid in (select customerid from addresses))::int] script -- The magic here is customer id in part, the IN will provide us a 0 or a 1 I assume with indices being 1 indexd.
+FROM customers
+-- Modifed sales table with customerid, a total sum to check if more than 199 and call this sales, join the salesreps table to handle out tasks evenly partitioned
+NATURAL JOIN (SELECT customerid, SUM(price) FROM sales GROUP BY customerid) sales, salesreps
+WHERE customerid in (
+  SELECT sales.customerid FROM sales
+  -- Here we were looking for matching addressids so that we can see if customerids are not matching
+  LEFT JOIN addresses on sales.addressid = addresses.addressid
+  -- Here we looking for mismatching customer ids or there is no customer id. This helps with the array choice above
+  WHERE sales.customerid <> addresses.customerid OR addresses.customerid IS NULL
+) AND SUM >=199
+GROUP BY customerid, sum
+ORDER BY sum DESC, email
+
+
+==========================================================================================================================
+
+Milliseconds 
+
+My solution
+
+select h * 60 * 60 * 1000 + m * 60 * 1000 + s * 1000 as res from past
+
+
+A solution using a function 
+
+CREATE FUNCTION to_milliseconds(h integer, m integer, s integer) RETURNS bigint
+    LANGUAGE plpgsql
+    IMMUTABLE
+    AS $$
+        BEGIN
+            RETURN (h * 3600 + m * 60 + s) * 1000;
+        END;
+    $$;
+
+SELECT to_milliseconds(h, m, s) AS res FROM past;
+
+===========================================================================================================================
+
+Remove exclamations, using replace func
+
+
+SELECT 
+   s, 
+       REPLACE(s, '!', '') as res 
+FROM 
+       removeexclamationmarks
+
+=========================================================================================================================
+
+-- # write your SQL statement here: you are given a table 'nospace' with column 'x', return a table with column 'x' and your result in a column named 'res'.
+
+SELECT
+  x,
+  REPLACE(x, ' ', '') as res
+FROM
+  nospace
+
+===========================================================================================================================
+
+For this challenge you need to create a simple SELECT statement that will return all columns from the people table, and join to the toys table so that you can return the COUNT of the toys
+
+people table schema
+id
+name
+toys table schema
+id
+name
+people_id
+You should return all people fields as well as the toy count as "toy_count".
+
+NOTE: Your solution should use pure SQL. Ruby is used within the test cases to do the actual testing.
+
+-- Create your SELECT statement here
+SELECT
+  p.*,
+  COUNT(t.id) as toy_count
+FROM
+  people p
+JOIN toys t ON p.id = t.people_id 
+GROUP BY p.id
+
+============================================================================================================================
+
+Simple group by
+
+-- Create your SELECT statement here
+SELECT
+  age,
+  COUNT(*) people_count
+FROM
+  people
+GROUP BY age
+
+============================================================================================================================
+
+-- # write your SQL statement here: you are given a table 'booltoword' with column 'bool', return a table with column 'bool' and your result in a column named 'res'.
+SELECT
+  bool,
+  CASE
+    WHEN bool = True THEN 'Yes'
+    ELSE 'No'
+  END AS res
+FROM
+  booltoword
+
+============================================================================================================================
+
+--person table has name data
+SELECT
+  FORMAT('Hello, %s how are you doing today?', name) as greeting
+FROM
+  person
+
+============================================================================================================================
+
+There is an events table used to track different key activities taken on a website. For this task you need to:
+
+find the entries whose name equals "trained"
+group them by the day the activity happened (the date part of the created_at timestamp) and their description's
+the 2 aforementioned fields should be returned together with the number of grouped entries in a column called count
+the result should also be sorted by day
+"events" table schema
+id (bigint)
+name (text)
+created_at (timestamp)
+description (text)
+expected result schema
+day (date)
+description (text)
+count (numeric)
+
+--SELECT * FROM events;
+SELECT
+  DATE(created_at) as day,
+  description,
+  count(description)
+FROM 
+  events
+WHERE
+  name = 'trained'
+GROUP BY description, day
+ORDER BY day
+
+
+
+OTHER WAY TO CAST
+
+SELECT 
+  created_at::DATE "day", description, count(*)
+  FROM events
+  WHERE name = 'trained'
+  GROUP BY 1,2
+
+============================================================================================================================
+
+Given the the schema presented below find two actors who cast together the most and list titles of only those movies they were casting together. Order the result set alphabetically by the movie title.
+
+Table film_actor
+ Column     | Type                        | Modifiers
+------------+-----------------------------+----------
+actor_id    | smallint                    | not null
+film_id     | smallint                    | not null
+...
+Table actor
+ Column     | Type                        | Modifiers
+------------+-----------------------------+----------
+actor_id    | integer                     | not null 
+first_name  | character varying(45)       | not null
+last_name   | character varying(45)       | not null
+...
+Table film
+ Column     | Type                        | Modifiers
+------------+-----------------------------+----------
+film_id     | integer                     | not null
+title       | character varying(255)      | not null
+...
+The desired output:
+first_actor | second_actor | title
+------------+--------------+--------------------
+John Doe    | Jane Doe     | The Best Movie Ever
+...
+first_actor - Full name (First name + Last name separated by a space)
+second_actor - Full name (First name + Last name separated by a space)
+title - Movie title
+Note: actor_id of the first_actor should be lower then actor_id of the second_actor
+
+
+NOT TRIED, BRAIN IS POOP
+
+so we want to find the top pair first, this is done with a with statement
+
+
+with top_pair as (
+  select a1.actor_id as id1, a2.actor_id as id2
+  from film_actor a1
+    inner join film_actor a2 on a1.film_id=a2.film_id
+  where a1.actor_id <> a2.actor_id
+  group by a1.actor_id, a2.actor_id
+  order by count(a1.film_id) desc
+  limit 1
+)
+select
+(select first_name || ' ' || last_name from actor where actor_id = tp.id1) as first_actor,
+(select first_name || ' ' || last_name from actor where actor_id = tp.id2) as second_actor,
+  f.title as title
+from top_pair tp
+    inner join film_actor fa1 on tp.id1 = fa1.actor_id
+    inner join film_actor fa2 on tp.id2 = fa2.actor_id
+    inner join film f on fa1.film_id=f.film_id and fa2.film_id=f.film_id
+
+https://www.codewars.com/kata/5818bde9559ff58bd90004a2/solutions/sql
+
+
