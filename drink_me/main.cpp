@@ -2,11 +2,17 @@
 #include <stdlib.h>
 
 int main(){
-	std::string drinks[5] = {"black coffee", 
+	std::string drinks[6] = {"black coffee", 
 						"black tea", 
 						"flat white", 
 						"quad shot",
-						"chai tea latte"};
+						"chai tea latte",
+						"casamigos",
+						"corralejo",
+						"jameson",
+						"bushmills",
+						"hendricks",
+						"scapegrace"};
 
 	std::srand(time(nullptr));
 	int drink_size = sizeof(drinks)/sizeof(drinks[0]);
