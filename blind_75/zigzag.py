@@ -1,3 +1,4 @@
+#https://leetcode.com/problems/zigzag-conversion/
 class Solution:
     def convert_grid(self, s: str, numRows: int) -> str:
         if numRows == 1 :
@@ -29,4 +30,21 @@ class Solution_list:
             if cursor == 0 or cursor == numRows -1:
                 south = not south
             cursor += 1 if south else -1
-        return ''.join(rows)
+        return ''.join(rows
+
+class Solution_fastest:
+    def convert(self, s: str, numRows: int) -> str:
+        if len(s) <= 1 or numRows <= 1:
+            return s 
+
+        cycle_len = 2 * (numRows - 1)
+
+        rows = [""] * numRows
+
+        for i in range(len(s)):
+            position = i % cycle_len
+            if position >= numRows:
+                position = cycle_len - position
+            rows[position] += s[i]
+
+        return "".join(rows))
